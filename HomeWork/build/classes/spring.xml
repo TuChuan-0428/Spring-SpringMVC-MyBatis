@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xmlns:mybatis-spring="http://mybatis.org/schema/mybatis-spring"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-4.3.xsd
+		http://mybatis.org/schema/mybatis-spring http://mybatis.org/schema/mybatis-spring-1.2.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.3.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.3.xsd">
+	<!-- 1 springs扫描com.zisu包下的所有组件，除控制器外其他都要，把包括业务逻辑组件：dao,service -->
+	<context:component-scan base-package="com.zisu">
+	<!-- 排除式扫描不写use-default-filters="false"-->
+		<context:exclude-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
+	</context:component-scan>
+	
+	<!-- 2 导入外部配置文件 -->
+	<context:property-placeholder location="classpath:dbconfig.property"/>
+	
+	<!--3 配置数据源 -->
+	<bean id="ds"  class="com.mchange.v2.c3p0.ComboPooledDataSource">
+	<property name="driverClass" value="${jdbc.driver}" />
+	<property name="jdbcUrl" value="${jdbc.url}" />
+	<property name="user" value="${jdbc.username}" />
+	<property name="password" value="${jdbc.password}" />
+	<property name="maxPoolSize" value="${jdbc.maxPoolSize}"/>
+	
+<!-- 	<property name="driverClass" value="com.mysql.jdbc.Driver"/>
+	<property name="jdbcUrl" value="mysql://localhost:3306/db2"/>
+	<property name="jdbcUrl" value="jdbc:mysql://localhost:3306/db2"/>
+	<property name="user" value="root"/>
+	<property name="password" value="root1"/>
+	<property name="maxPoolSize" value="20"/>
+	<property name="minPoolSize" value="3"/> -->
+	</bean>
+	
+	
+	
+	
+	<!-- 5 配置事务控制：配置事务管理器，让它控制数据源中的连接、关闭和提交 -->
+	<!-- 配置SqlSessionFactory时必须配置事务管理 -->
+	<bean id="tm"  class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+	<property name="dataSource" ref="ds" />
+	</bean>
+	
+	<!--6 开启事务注解扫描  -->
+	<tx:annotation-driven transaction-manager="tm"/>
+	
+	<!-- 7 配置aop -->
+	
+	<!--配置使用mybais操作数据库  -->
+	<!-- 配置SqlSessionFactory 
+	可以根据配置文件得到SqlSessionFactory
+	-->	
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<!-- 指定数据源 -->
+		<property name="dataSource" ref="ds" />
+		<!-- 指定MyBatis主配置文件的路径 -->
+		<property name="configLocation" value="classpath:mybatis-config.xml" />
+		<!--指定mapper映射文件位置
+		这里指定时，mybatis-config.xml文件中的maper就不需要指定了
+		<mappers>
+ 			 <mapper resource="KeyLockMapper.xml"/>
+  		</mappers> 
+		  -->
+		<property name="mapperLocations" value="classpath:KeyLockMapper.xml" />
+	</bean>
+	<!-- 将dao接口的每一个实现加入到容器中 -->
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+	<!-- 指定dao接口所在的包 -->
+	<property name="basePackage" value="com.zisu.dao" />
+	<property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"></property>
+	</bean>
+</beans>

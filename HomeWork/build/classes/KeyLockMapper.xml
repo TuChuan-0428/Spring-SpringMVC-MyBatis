@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- namespace：名称空间，写接口的全类名，告知Mybatis这个配置文件是实现哪个接口的 -->  
+<mapper namespace="com.zisu.dao.LockDao">
+<!-- <mapper namespace="com.zisu.dao.KeyDao"> -->
+<!-- public List<Lock> getAllLockKeyReturnListById(int id);-->
+ <!-- 根据传入的id查询对应的记录 ，自定义结果的封装规则-->
+ <!-- 查询t_key的id和name字段及t_lock的id和name字段
+SELECT l.id lockid , l.name lockname, k.id keyid, k.name keyname FROM t_lock l 
+	LEFT JOIN t_key k ON k.lid = l.id 
+	WHERE l.id=3 
+    
+    public class Lock {
+	private int  id;
+	private String  name;
+	//所有keys
+	private List<Key> keys;
+	}    
+	public class Key {
+	private int  id;
+	private String  name;
+	
+	...
+	}
+ 	 lockid  lockname   keyid  keyname   
+     3  	B317lock       4  B317key1  
+     3  	B317lock       5  B317key2  
+     3  	B317lock       6  B317key3   
+  -->
+  <select id="getAllLockKeyReturnListById" resultMap="mylock">
+  SELECT l.id lockid , l.name lockname, k.id keyid, k.name keyname FROM t_lock l 
+	LEFT JOIN t_key k ON k.lid = l.id 
+	WHERE l.id=#{id} 
+  </select>
+  
+  <resultMap type="com.zisu.bean.Lock" id="mylock">
+	  <id property="id" column="lockid"/>
+	  <result property="name" column="lockname"/>
+	  <!-- collection：用于定义集合元素的封装
+	  property：指定哪个属性是集合类型
+	  ofType：指定集合元素的类型 -->
+	  
+	  <collection property="keys" ofType="com.zisu.bean.Key">
+	 <!--  指定集合元素的封装规则 -->
+	  <id property="id" column="keyid"/>
+	  <result property="name" column="keyname"/>
+	 <!--  <result property="lid" column="lockid"/> -->
+	  </collection>
+  
+  </resultMap>
+  
+ <!--  public Lock queryLockByLikeLockName(String name); 
+ 	根据输入的name参数查询相应的lock信息，模糊查询
+ 	SELECT l.id lockid,l.name lockname,k.id keyid,k.name keyname FROM t_lock l 
+		LEFT JOIN t_key k ON k.lid = l.id 
+		WHERE l.name LIKE '%B3%'	
+ -->
+ <select id="queryLockByLikeLockName" resultMap="mylock">
+	SELECT l.id lockid,l.name lockname,k.id keyid,k.name keyname FROM t_lock l 
+		LEFT JOIN t_key k ON k.lid = l.id 
+		WHERE l.name LIKE concat("%",#{name},"%")
+ </select> 
+ <!-- //根据lockid删除锁及相应的keys记录
+	public Integer delLockByLockId(int lockid);
+	public List<Integer> getLockKeysIdByLockId(int lockid);;
+	 -->
+	 <delete id="delLockByLockId">
+	 delete from t_lock where id = #{id}
+	 </delete>
+  	<select id="getLockKeysIdByLockId" resultType="java.lang.Integer">
+  	SELECT k.id keyid ,k.name keyname FROM t_lock l 
+	LEFT JOIN t_key k ON k.lid = l.id 
+	WHERE l.id=#{id} 
+  	</select>
+</mapper>
